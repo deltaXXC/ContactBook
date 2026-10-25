@@ -1,12 +1,14 @@
 #include "mywidget.h"
 #include "ui_mywidget.h"
 
+#include <QFileDialog>
 #include <QFile>
-#include <QDebug>
+#include <QTextStream>
+#include <QTableWidgetItem>
+#include <QMessageBox>
 
-
-QString mFileName = "C:/test/myfile.csv";
-
+QString mFileName1 = "D:/homework/ContactBook/myfile.csv";
+QString mFileName2 = "D:/homework/ContactBook/myfile.text";
 void Write(QString Filename, QString str)
 {
     QFile mFile(Filename);
@@ -71,7 +73,81 @@ void MyWidget::on_pushButton_2_clicked()
         saveFile += "\n";
     }
 
-    Write(mFileName, saveFile);
+    Write(mFileName1, saveFile);
+    Write(mFileName2, saveFile);
 
+}
+
+
+void MyWidget::on_pushButton_3_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName(
+        this,
+        "選擇 CSV 檔案",
+        "",
+        "CSV Files (*.csv)"
+        );
+
+
+    if (filename.isEmpty())
+        return;
+
+
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QMessageBox::warning(this, "錯誤", "無法開啟檔案");
+        return;
+    }
+
+    QTextStream in(&file);
+
+
+    ui->tableWidget->setRowCount(0);
+
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+
+
+        if (line.trimmed().isEmpty())
+            continue;
+
+
+        QStringList data = line.split(",");
+
+
+        if (!data.isEmpty() && data.last().isEmpty())
+            data.removeLast();
+
+
+        int row = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(row);
+
+
+        for (int col = 0;
+             col < data.size() &&
+             col < ui->tableWidget->columnCount();
+             col++)
+        {
+            ui->tableWidget->setItem(
+                row,
+                col,
+                new QTableWidgetItem(data[col])
+                );
+        }
+    }
+
+
+    file.close();
+
+
+    QMessageBox::information(
+        this,
+        "匯入成功",
+        "CSV 資料已成功匯入"
+        );
 }
 
